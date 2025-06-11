@@ -1,0 +1,58 @@
+# 创建日期：2025-04-13
+reference: DGCDN
+dataset_type: fan # bearing or fan
+fan_section: 00 # 00, 01, 02
+use_cuda: True
+device: cpu
+# dataset
+use_fft: False # 输入为原始时域信号（若为True则用频谱图）
+use_hilbert_envelope: True  # 启用希尔伯特包络分析，提取信号包络特征。
+use_domain_weight: True # 角度重采样，统一不同转速下的采样点。
+data_length: 2560 # 每个样本的长度（时间步数）。
+use_angular_resample: True  # 对不同数据域（如不同工况）施加权重，增强泛化。
+unified_Os: 350 # 转轴每转一圈采样点的数目, 每转采样350点，用于标准化转速变化的数据。
+dropout: 0.3 #添加dropout防止过拟合
+# training
+#batch_size: 64 #128 每批数据量。
+batch_size: 32  # 减小批量大小
+
+num_classes: 2 # 类别数目，3或者4，当为3时，排除滚动体故障类别
+steps: 300
+checkpoint_freq: 1 # 每更新checkpoint_freq个batch,对test dataloader进行推理1次
+#lr: 0.0001 # 初始学习率，较小值适合精细调优。
+lr: 0.0001  # 学习率
+
+# focalLoss 的 gamma设置
+focal_loss_gamma: 1
+
+# 损失函数权重
+w_ca: 1
+w_rc: 1 # 重构损失权重
+#w_rr: 0.1
+w_rr: 0.1  # 调整损失权重
+use_entropy_loss: true
+entropy_loss_weight: 0.3  # 可调，建议初始为 0.1
+
+use_learning_rate_sheduler: True
+cos: False #cosine连续递减方案性能太差
+# schedule: [20, 50, 100, 150]
+# gamma: 0.1 #0.5
+schedule: 50  # 每schedule步降低学习率。
+gamma: 0.1 # 0.25 #0.5 # 学习率衰减因子（每次乘以0.1）。
+loss: focal loss
+metrics: accuracy + AUC + F1-score
+
+#增加早停机制
+early_stopping_patience: 70 #早停容忍步数
+early_stop: True
+
+# 保存的最低acc
+low_acc: 0.5
+# 新增稳定性参数
+grad_clip: 5.0  # 梯度裁剪阈值
+eps: 1e-8  # 数值稳定性参数
+
+# CBDA注意力机制超参数
+cbam_reduction: 4
+cbam_kernel_size: 7
+use_residual: True # 使用残差连接
