@@ -1,0 +1,24 @@
+# config_files/MAACCN.yaml
+
+# --- 实验通用设置 ---
+use_cuda: True
+fan_section: '00'           # 默认实验场景/段落
+lr: 0.0005                  # 学习率, 论文中测试了多个值, 5e-4 最佳 [cite: 463]
+steps: 60             # 总训练步数
+batch_size: 32              # 批处理大小 [cite: 468]
+checkpoint_freq: 100        # 每隔多少步验证一次
+early_stop: True
+early_stopping_patience: 10
+
+# --- 数据加载器设置 ---
+num_workers: 4
+signal_len: 1024            # 信号长度 [cite: 451, 458]
+# 归一化类型 (根据您的数据预处理方式选择, z_score 或 min_max)
+normalization_type: "z_score"
+
+# --- MAACCN 模型专属配置 ---
+model:
+  num_classes: 2            # 单一故障类别数 (e.g., 堵塞, 泄漏, 正常) [cite: 427, 446]
+  digit_caps_dim: 16        # 数字胶囊的维度 [cite: 427, 446]
+  routing_iterations: 3     # 最大化聚合路由的迭代次数 [cite: 469]
+  output_threshold: 0.5     # 解耦分类层的输出阈值 [cite: 469]

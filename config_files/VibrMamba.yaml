@@ -1,0 +1,27 @@
+# 配置文件: config_files/VibrMamba.yaml
+
+# --- 实验基本设置 ---
+use_cuda: True                # 是否使用GPU
+early_stop: True              # 是否启用早停
+early_stopping_patience: 10   # 早停的耐心轮数
+steps: 5000                   # 总训练步数
+checkpoint_freq: 200          # 每隔多少步验证一次模型
+lr: 0.0005                    # 学习率
+
+# --- 数据加载设置 ---
+# 注意：这些参数需要与您的.mat文件和数据加载器(ReadMIMII, ReadScenarioData)匹配
+signal_len: 2048              # 输入信号的长度
+buffer_size: 1000             # 数据加载时的缓冲区大小
+batch_size: 64                # 批处理大小
+n_class: 2                    # 类别数 (正常/异常)
+num_workers: 0                # 数据加载的工作线程数
+
+# --- VibrMamba 模型超参数 ---
+# 参考论文 Table 8 & Table 9
+model:
+  patch_size: 16       # 将一维信号切分成小块的大小, signal_len 必须能被 patch_size 整除
+  d_model: 192         # 模型的核心维度
+  d_state: 16          # SSM的状态空间维度
+  d_conv: 4            # 内部1D卷积的核大小
+  expand: 2            # 扩展因子，d_inner = d_model * expand
+  num_layers: 6        # VibrMamba Block 的堆叠层数
