@@ -1,0 +1,24 @@
+# PTLN.yaml
+# 配置文件 for reproduce_PTLN.py
+
+# --- 基本设置 ---
+use_cuda: True
+early_stop: True
+early_stopping_patience: 15
+steps: 60
+batch_size: 64
+checkpoint_freq: 200 # 日志和验证频率
+signal_len: 1024
+lr: 0.001
+weight_decay: 0.0001
+data_dir: './data/MIMII_DGCDN_format' # 请确保数据存放路径正确
+
+# --- PTLN 模型特定参数 ---
+model:
+  num_classes: 2 # 根据您的数据集故障类别数进行修改 (e.g., MIMII section 00 有4个类别)
+  lambda_d: 1.0   # 对抗损失的权重
+  lambda_mmd: 0.5 # MMD损失的权重
+
+# fan_section 将在主程序中被动态赋值
+# 例如: '00', '01', 's1', 's2' 等
+fan_section: '00'
