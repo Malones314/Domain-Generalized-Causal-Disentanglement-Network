@@ -1,13 +1,11 @@
 # reproduce_PTLN.py (Corrected Version)
-
 #########################################################################
-#
+# DA方法
 # 本脚本旨在复现论文《Progressive Transfer Learning: An Intelligent Fault
 # Diagnosis Method for Unlabeled Rotating Machinery With Small Samples》(简称 PTLN)
 #
 # 核心复现点:
-# 1. 严格遵循 'MAACCN.py' 的数据加载与实验框架。
-# 2. 实现 PTLN 论文中描述的核心模型和算法。
+# 1. 实现 PTLN 论文中描述的核心模型和算法。
 # 3. 评估指标使用标准的单标签分类指标 (acc, auc, prec, recall, f1)。
 #
 #########################################################################
