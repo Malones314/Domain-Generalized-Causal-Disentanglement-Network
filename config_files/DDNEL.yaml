@@ -1,0 +1,32 @@
+# config_files/DDNEL.yaml
+
+# --- 实验通用设置 ---
+use_cuda: True
+fan_section: 's1'           # 待运行的场景或section, e.g., '00', '01', 's1', 's2'
+steps: 60              # 总训练步数
+checkpoint_freq: 1       # 每隔多少步验证一次
+early_stop: True            # 是否启用早停
+early_stopping_patience: 10 # 早停的耐心轮数
+
+# --- 数据加载器设置 ---
+batch_size: 64
+n_workers: 4
+load_in_memory: True
+drop_last: True
+
+# --- DDNEL 模型超参数 ---
+lr: 0.001                   # 学习率
+lambda_lmmd: 0.6            # LMMD损失的权重 (对应论文中的 λ)
+lambda_entropy: 0.1         # 熵损失的权重 (用于平衡不同损失)
+
+# --- 网络结构定义 ---
+# 共享骨干网络 (Shared Net G)
+backbone:
+  input_dim: 20096                 # 原始信号长度
+  hidden_dims: [512, 256] # 共享MLP的隐藏层维度
+
+# 子模块 (用于域特有和域不变模块)
+submodule:
+  feature_dim: 128        # 特征提取器F的输出维度
+  classifier_hidden: 64   # 分类器D的隐藏层维度
+  num_classes: 2          # 分类类别数 (正常/故障)
