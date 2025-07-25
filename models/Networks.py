@@ -80,7 +80,6 @@ class Network_fan(nn.Module):
 ###########
 
 # 以下为风扇数据对应的特征生成器、故障分类器和域分类器
-# 结构与轴承版本类似，主要区别在于输入尺寸和网络参数
 class FeatureGenerator_fan(nn.Module):
     """DGNIS风扇特征生成器
 
@@ -162,7 +161,7 @@ class DomainClassifier_fan(nn.Module):
         x2 = self.linear2(x1)
 
         return x2
-# DGCDN风扇数据相关组件（结构与轴承版本类似）
+# DGCDN风扇数据相关组件
 class Encoder_DGCDN(nn.Module):
     """DGCDN风扇编码器"""
 
@@ -205,17 +204,18 @@ class Decoder_DGCDN(nn.Module):
         super().__init__()
         # 上采样+卷积结构（镜像编码器）
         self.up1 = nn.Upsample(scale_factor=2, mode ='linear', align_corners=True) #(B,64, 40)
-        self.conv1 = Conv1dBlock(in_chan=32*2, out_chan=32, kernel_size=64, stride=1, activation = 'lrelu', norm='BN', pad_type='zero', padding=63) #(B,32,103)
-        self.up2 = nn.Upsample(scale_factor=2, mode ='linear', align_corners=True) #(B,32,206)
-        self.conv2 = Conv1dBlock(in_chan=32, out_chan=32, kernel_size=64, stride=1, activation = 'lrelu', norm='BN', pad_type='reflect', padding=64) #(B,32, 271)
-        self.up3 = nn.Upsample(scale_factor=4, mode ='linear', align_corners=True) #(B,32,1084)
-        self.conv3 = Conv1dBlock(in_chan=32, out_chan=32, kernel_size=128, stride=1, activation = 'lrelu', norm='BN', pad_type='reflect', padding=127) #(B,32,1211)
-        self.up4 = nn.Upsample(scale_factor=4, mode ='linear', align_corners=True) #(B,32,4844)
-        self.conv4 = Conv1dBlock(in_chan=32, out_chan=32, kernel_size=128, stride=1, activation = 'lrelu', norm='BN', pad_type='reflect', padding=129) #(B,32,4975)
-        self.up5 = nn.Upsample(scale_factor=4, mode ='linear', align_corners=True) #(B,32,19900)
-        self.conv5 = Conv1dBlock(in_chan=32, out_chan=32,  kernel_size=128, stride=1, activation = 'lrelu', norm='BN', pad_type='reflect', padding=129)#(B,32,20031)
+        self.conv1 = Conv1dBlock(in_chan=64, out_chan=32, kernel_size=64, stride=1, activation = 'lrelu', norm='BN', pad_type='zero', padding=63)
+        self.up2 = nn.Upsample(scale_factor=2, mode ='linear', align_corners=True)
+        self.conv2 = Conv1dBlock(in_chan=32, out_chan=32, kernel_size=64, stride=1, activation = 'lrelu', norm='BN', pad_type='reflect', padding=64)
+        self.up3 = nn.Upsample(scale_factor=4, mode ='linear', align_corners=True)
+        self.conv3 = Conv1dBlock(in_chan=32, out_chan=32, kernel_size=128, stride=1, activation = 'lrelu', norm='BN', pad_type='reflect', padding=127)
+        self.up4 = nn.Upsample(scale_factor=4, mode ='linear', align_corners=True)
+        self.conv4 = Conv1dBlock(in_chan=32, out_chan=32, kernel_size=128, stride=1, activation = 'lrelu', norm='BN', pad_type='reflect', padding=129)
+        self.up5 = nn.Upsample(scale_factor=4, mode ='linear', align_corners=True)
+        self.conv5 = Conv1dBlock(in_chan=32, out_chan=32,  kernel_size=128, stride=1, activation = 'lrelu', norm='BN', pad_type='reflect', padding=129)
         #最后一层输出不加Activation
-        self.conv6 = Conv1dBlock(32, 1, 128, 1, 'none', 'BN', 'reflect', 64)  # 输出层无激活
+        # self.conv6 = Conv1dBlock(32, 1, 128, 1, 'none', 'BN', 'reflect', 64)  # 输出层无激活
+        self.conv6 = Conv1dBlock(32, 1, 128, 1, 'none', 'BN', 'reflect', 96)  # 输出层无激活
 
     def forward(self, x):
         '''
@@ -253,7 +253,6 @@ class Classifier_DGCDN(nn.Module):
 #
 # 1. **基础网络结构**：
 #    - 所有网络都采用5层卷积+池化作为特征提取器
-#    - 轴承数据使用较小的池化核（2），风扇数据使用较大的池化核（4/2）
 #    - 卷积后使用LeakyReLU激活和批归一化（BN）
 #
 # 2. **架构变体**：
@@ -266,7 +265,6 @@ class Classifier_DGCDN(nn.Module):
 #    - 所有卷积层使用反射填充（reflect padding）保持信号边界信息
 #    - 分类器采用浅层结构（2-3层全连接）
 #    - 特征向量维度：
-#      - 轴承：1984维（32通道×62长度）
 #      - 风扇：640维（32通道×20长度）
 #
 # 4. **特殊方法**：
@@ -274,8 +272,7 @@ class Classifier_DGCDN(nn.Module):
 #    - `forward1()`：获取分类器中间特征（DGCDN专用）
 #
 # 5. **输入输出规格**：
-#    - 轴承输入：1×2560（Network_bearing）或1×1024（其他）
-#    - 风扇输入：1×20032（Network_fan）或1×长序列
+#    - 风扇输入：1×20096（Network_fan）或1×长序列
 #    - 输出：特征向量+分类logits（或重构信号）
 #
 # 该代码库实现了多种先进的域自适应故障诊断网络，通过不同的网络架构和训练策略，能够有效处理来自不同设备的振动信号，并在跨域场景下保持高精度的故障诊断能力。
