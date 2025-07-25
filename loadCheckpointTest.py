@@ -3,7 +3,6 @@ import time
 import torch
 import yaml
 
-# Import your classes
 from DGCDN import DGCDN, compute_class_weights_from_dataloader
 from datasets.load_DGCDN_data import ReadMIMII, ReadScenarioData
 from utils.SetSeed import set_random_seed
@@ -16,12 +15,13 @@ from utils.DictObj import DictObj
 
 # --- CHOOSE WHICH CHECKPOINT TO TEST ---
 # a) Example for a SCENARIO-based model (e.g., from an 's1' run)
-# filename_ = r'scenario_s1_acc0.8500_auc0.9200... .pth'
-# checkpoint_path = r'E:\code\myMethod-20250415\checkpoints\' + filename_
-
+filename_ = r'sections6_acc-1.0000_auc-1.0000pre_-1rec_0.5818862935788094_f1-1.0000_20250702_165708.pth'
+checkpoint_path = r'E:\code\myMethod-20250415\checkpoints\sections6\\' + filename_
+#
 # b) Example for a SECTION-based model (e.g., from a '01' run)
-filename_ = r'section01_acc0.7250_auc0.6507_pre0.7146_rec0.7267_f10.7163_20250515_160916.pth'
-checkpoint_path = r'C:\Users\Malones\Desktop\DGCDN\保存的结果\\' + filename_
+# filename_ = r'section00_acc0.8000_auc0.7121_pre0.8132_rec0.7064_f10.7281.pth'
+# checkpoint_path = r'C:\Users\Malones\Desktop\DGCDN\保存的结果\\' + filename_
+
 
 # Set to True if you want to generate t-SNE plots during testing
 GENERATE_TSNE_PLOTS = True
@@ -40,15 +40,17 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # Load the checkpoint
 checkpoint = torch.load(checkpoint_path, map_location=device)
 configs = checkpoint['configs']
+
 seed = checkpoint['seed']
 weights = checkpoint['class_weights']
+
+configs.use_attention = True
 
 # Set the random seed for reproducibility
 set_random_seed(seed)
 
 # Determine if the checkpoint is from a scenario-based or section-based run
 is_scenario_mode = str(configs.fan_section).startswith('s')
-
 datasets_src = []
 datasets_tgt = []
 datasets_list = []  # For logging purposes
@@ -136,16 +138,38 @@ else:
 
 print("\nModel successfully loaded from checkpoint.")
 
-# Create data loaders using the determined class and arguments
-# The first argument to the loader class is always the domain name (e.g., 'W' or 'id_00')
-datasets_object_src = [data_loader_class(domain, seed, configs=configs, **loader_args) for domain in datasets_src]
-datasets_object_tgt = [data_loader_class(domain, seed, configs=configs, **loader_args) for domain in datasets_tgt]
+# Initialize lists for data objects
+datasets_object_src = []
+datasets_object_tgt = []
 
-train_test_loaders_src = [ds.load_dataloaders() for ds in datasets_object_src]
-test_loaders_src = [test for train, test in train_test_loaders_src if test is not None]
+if is_scenario_mode:
+    # Logic for ReadScenarioData(scenario, domain_id, seed, configs)
+    scenario_val = loader_args['scenario']
+    print(f"Using ReadScenarioData for scenario: {scenario_val}")
 
+    # The 'domain' variable from the loop corresponds to 'domain_id'
+    datasets_object_src = [data_loader_class(scenario_val, domain, seed, configs=configs) for domain in datasets_src]
+    datasets_object_tgt = [data_loader_class(scenario_val, domain, seed, configs=configs) for domain in datasets_tgt]
+
+else:
+    # Logic for ReadMIMII(domain, seed, section, configs)
+    print(f"Using ReadMIMII for section: {configs.fan_section}")
+
+    # The original generic call works for ReadMIMII's signature
+    datasets_object_src = [data_loader_class(domain, seed, configs=configs, **loader_args) for domain in datasets_src]
+    datasets_object_tgt = [data_loader_class(domain, seed, configs=configs, **loader_args) for domain in datasets_tgt]
+
+# ==================== 代码修改开始 ====================
+# 为目标域获取测试加载器 (用于评估和绘图)
 train_test_loaders_tgt = [ds.load_dataloaders() for ds in datasets_object_tgt]
-test_loaders_tgt = [test for train, test in train_test_loaders_tgt if test is not None]
+test_loaders_for_eval = [test for train, test in train_test_loaders_tgt if test is not None]
+
+# 为源域获取它们的训练加载器 (仅用于t-SNE绘图)
+# 因为根据数据加载逻辑，源域的测试集为空。
+train_test_loaders_src = [ds.load_dataloaders() for ds in datasets_object_src]
+train_loaders_for_plot = [train for train, test in train_test_loaders_src if train is not None]
+# ==================== 代码修改结束 ====================
+
 
 # Set up logger
 log_dir_name = f"scenario_{configs.fan_section}" if is_scenario_mode else f"section_{configs.fan_section}"
@@ -165,16 +189,27 @@ if __name__ == '__main__':
     print(f"Source Domains: {datasets_src}")
     print(f"Target Domains (for testing): {datasets_tgt}")
 
-    # Combine loaders for testing
-    all_test_loaders = test_loaders_tgt + test_loaders_src
+    print(f"w_ca:{configs.w_ca}, w_rr:{configs.w_rr}, w_rc:{configs.w_rc}, dropout:{configs.dropout}")
+
+    # ==================== 代码修改开始 ====================
+    # 为t-SNE绘图，组合目标域的测试集和源域的训练集
+    all_loaders_for_plotting = test_loaders_for_eval + train_loaders_for_plot
+
+    # 用于性能评估的加载器列表只应包含目标域
+    all_test_loaders = test_loaders_for_eval
+    # ==================== 代码修改结束 ====================
 
     if not all_test_loaders:
         print("Error: No test data loaders could be created. Cannot perform evaluation.")
     else:
-        # Run the test
-        acc_results, auc_results, prec_results, recall_result, f1_results = model.test_model(all_test_loaders)
+        # ==================== 代码修改开始 ====================
+        # 将包含所有域数据的加载器列表传递给 test_model
+        # test_model 内部的t-SNE函数会使用所有加载器进行绘图
+        # 其性能指标计算是分加载器进行的，我们后续只读取第一个（即目标域）的结果
+        acc_results, auc_results, prec_results, recall_result, f1_results = model.test_model(all_loaders_for_plotting)
+        # ==================== 代码修改结束 ====================
 
-        # Assuming the first loader in the list is the primary target
+        # 假设列表中的第一个加载器是我们的主要目标域
         print("\n--- Test Results on Target Domain ---")
         print(f"  Accuracy:  {acc_results[0]:.4f}")
         print(f"  AUC:       {auc_results[0]:.4f}")
