@@ -5,15 +5,9 @@
 
 代码部分内容借鉴：https://github.com/ShaneSpace/DGFDBenchmark 。
 
-有关DGCDN的详细内容与训练细节等在论文收录后会全部公开。
-
 
 Download the .pth file from the “trained models” and import the file path into loadCheckpointTest.py to view the test results. The dataset used are MIMII DG and MIMII, which can be downloaded here: https://zenodo.org/records/6529888 and https://zenodo.org/record/3384388. 
 
 The reproduction codes for the comparative methods in the experimental section are stored in: otherMethods.
 
 Some parts of the code are referenced from: https://github.com/ShaneSpace/DGFDBenchmark . 
-
-Detailed information about DGCDN and training specifics will be fully disclosed after the paper is accepted.
-
-
