@@ -11,3 +11,13 @@ Download the .pth file from the “trained models” and import the file path in
 The reproduction codes for the comparative methods in the experimental section are stored in: otherMethods.
 
 Some parts of the code are referenced from: https://github.com/ShaneSpace/DGFDBenchmark . 
+
+# Citation
+```
+@article{wei2025dgcdn,
+  title={DGCDN: Robust Acoustic Fault Diagnosis via Domain-Generalized Causal Disentanglement},
+  author={Wei, Zhongliang and Zhai, Ruichen and Su, Chang},
+  journal={Measurement Science and Technology},
+  year={2025}
+}
+```
