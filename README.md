@@ -23,7 +23,7 @@ Some parts of the code are referenced from: https://github.com/ShaneSpace/DGFDBe
 ```
 
 # 界面设计
-我们为DGCDN做了简单的界面Demo(存放于Qt中)，具体实现了如下功能：
+我们为DGCDN做了简单的界面Demo(使用Qt框架)，具体实现了如下功能：
 1. 使用选择的预训练好的模型对选择的文件夹进行故障诊断
 2. 使用选择的预训练好的模型对选择的文件夹进行持续监控
 3. 对于诊断结果进行诊断结果展示，对于持续监控任务进行实时结果展示
