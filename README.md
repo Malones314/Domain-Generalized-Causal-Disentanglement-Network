@@ -15,10 +15,14 @@ Some parts of the code are referenced from: https://github.com/ShaneSpace/DGFDBe
 # Citation
 ```
 @article{wei2025dgcdn,
-  title={DGCDN: Robust Acoustic Fault Diagnosis via Domain-Generalized Causal Disentanglement},
+  title={DGCDN: robust acoustic fault diagnosis via domain-generalized causal disentanglement},
   author={Wei, Zhongliang and Zhai, Ruichen and Su, Chang},
   journal={Measurement Science and Technology},
-  year={2025}
+  volume={36},
+  number={12},
+  pages={125006},
+  year={2025},
+  publisher={IOP Publishing}
 }
 ```
 
